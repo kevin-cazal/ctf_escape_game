@@ -1,8 +1,9 @@
 """Demo of a full escape-game session, filmed at once: staff dashboard (left), équipe 01 (top
 right), équipe 02 (bottom right).
 
-Drives two browsers on the ealab deployment, from an EMPTY dashboard (delete /data/state.json in
-the dashboard container and reset the results first) to the final ranking, and records each one.
+Continues the infrastructure guide: run it from the folder the guide cloned and configured (it
+reads .env and subjects/ there), on that fresh local deployment (4 rooms on localhost, 2 teams,
+nothing pushed yet), up to the final ranking. Records the three browsers.
 Then put them side by side:
 
     python tools/record_demo.py
@@ -28,8 +29,9 @@ def flags_of(subject):
 
 
 FLAG = {**flags_of("hex_dec"), **flags_of("agent_064")}
-D = "https://dashboard.eg.ealab.duckdns.org"
-R = {1: "https://room1.eg.ealab.duckdns.org", 2: "https://room2.eg.ealab.duckdns.org"}
+# The deployment of the infrastructure guide (tools/record_guide_infra.py): one machine, localhost.
+D = os.environ.get("DEMO_DASHBOARD", "http://localhost:9180")
+R = {n: env.get(f"ROOM{n}_URL", f"http://localhost:918{n}") for n in (1, 2, 3, 4)}
 TOKEN = env["ROOMS_ADMIN_TOKEN"]
 CH = os.environ.get("CHROMIUM", "/home/kc/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome")
 SW, SH = 960, 1080   # staff: left half
@@ -166,49 +168,53 @@ with sync_playwright() as p:
     p2.set_content(PLACEHOLDER.format(team="Équipe 02"))
     mark("start")
 
-    # ---------- 1. Staff: log in, empty dashboard ----------
+    # ---------- 1. Staff: log in; the install already registered rooms and teams ----------
     st.goto(D + "/login"); caption(st, "Staff · connexion au tableau de bord")
     time.sleep(1.5)
     typ(st.locator("input[name=password]"), env["DASHBOARD_PASSWORD"], 60)
     click(st, st.locator("button.primary"), 1.5)
-    st.goto(D + "/prepare"); caption(st, "1 · Préparer : le tableau de bord est vide")
-    time.sleep(3)
+    st.goto(D + "/prepare")
+    caption(st, "1 · Préparer : à l'installation, les salles sont déjà enregistrées (voir le guide)")
+    time.sleep(4)
 
-    # ---------- 2. Add the two rooms ----------
-    for n in (1, 2):
-        caption(st, f"1 · Préparer : ajouter la salle {n} (adresse de l'instance CTFd + jeton admin)")
-        form = st.locator("form[action$='/rooms']")
-        form.scroll_into_view_if_needed()
-        typ(form.locator("input[name=url]"), R[n], 35)
-        typ(form.locator("input[name=token]"), TOKEN[:24], 8); form.locator("input[name=token]").fill(TOKEN)
-        typ(form.locator("input[name=name]"), f"Salle {n}", 60)
-        click(st, form.locator("button.primary"), 2)
-    mark("rooms added")
-
-    # ---------- 3. Contents: show the library, then bind ----------
+    # ---------- 2. Contents: the library, one content, then each room's choice ----------
     caption(st, "2 · Contenus des salles : la bibliothèque (créer, charger depuis git ou un zip)")
     st.locator("#contents").scroll_into_view_if_needed(); time.sleep(3.5)
     click(st, st.locator("#contents a", has_text="Hexadécimal et décimal").first, 2)
     caption(st, "2 · Un contenu : des étapes, chacune avec son texte, ses fichiers et son flag")
     time.sleep(2.5)
     st.mouse.wheel(0, 700); time.sleep(2); st.mouse.wheel(0, 900); time.sleep(2)
-    st.goto(D + "/prepare"); caption(st, "1 · Préparer : choisir le contenu de chaque salle")
-    for n, content in ((1, "agent_064"), (2, "hex_dec")):
-        sel = st.locator(f"select[form=f-room{n}]")
-        flash(st, sel); sel.select_option(content); time.sleep(0.8)
-        click(st, st.locator(f"#f-room{n} button[value=save]"), 1.5)
-    mark("contents bound")
+    st.goto(D + "/prepare")
+    caption(st, "1 · Préparer : les salles 1 et 2 ont un contenu par défaut ; la salle 3 reçoit Faux texte")
+    for n in (1, 2):
+        flash(st, st.locator(f"select[form=f-room{n}]")); time.sleep(0.8)
+    sel = st.locator("select[form=f-room3]"); flash(st, sel); sel.select_option("faux_texte"); time.sleep(0.8)
+    click(st, st.locator("#f-room3 button[value=save]"), 1.5)
+    caption(st, "2 · Charger un contenu depuis un zip : l'exemple fourni (2 étapes, un fichier, une image)")
+    st.locator("#contents").scroll_into_view_if_needed(); time.sleep(1)
+    with st.expect_download() as dl:
+        click(st, st.locator("a", has_text="Download an example zip"), 1)
+    zip_path = dl.value.path()
+    st.locator("input[name=zip]").scroll_into_view_if_needed()
+    flash(st, st.locator("input[name=zip]")); st.locator("input[name=zip]").set_input_files(zip_path); time.sleep(1)
+    with st.expect_navigation():
+        click(st, st.locator("form:has(input[name=zip]) button"), 0)
+    caption(st, "2 · Chargé : on le relit dans l'éditeur")
+    time.sleep(3); st.mouse.wheel(0, 600); time.sleep(2.5)
+    st.goto(D + "/prepare"); caption(st, "1 · Préparer : la salle 4 reçoit le contenu chargé")
+    sel = st.locator("select[form=f-room4]"); flash(st, sel); sel.select_option("exemple_de_salle"); time.sleep(0.8)
+    click(st, st.locator("#f-room4 button[value=save]"), 1.5)
+    mark("contents chosen")
 
-    # ---------- 4. Teams ----------
+    # ---------- 3. Teams ----------
     caption(st, "3 · Équipes : un login et un mot de passe par équipe, le même dans toutes les salles")
-    cnt = st.locator("input[name=count]"); cnt.scroll_into_view_if_needed()
-    flash(st, cnt); cnt.fill("2"); time.sleep(0.5)
-    click(st, st.locator("form[action$='/teams'] button"), 2.5)
+    st.locator("input[name=count]").scroll_into_view_if_needed()
+    flash(st, st.locator(".teams")); time.sleep(3)
     teams = {}
     for chip in st.locator(".teams .team").all():
         login, pw = chip.inner_text().split()
         teams[login] = pw
-    mark(f"teams {teams}")
+    mark(f"teams {sorted(teams)}")
 
     # ---------- 5. Push and check ----------
     caption(st, "4 · Pousser : comptes, porte et énigmes sont importés dans chaque salle")
