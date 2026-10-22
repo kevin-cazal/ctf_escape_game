@@ -1,0 +1,8 @@
+# ealab.duckdns.org only: copied next to docker-compose.yml on that server. The host runs many
+# compose projects and Docker's default address pools are used up there, so this one gets an
+# explicit subnet.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.209.0.0/24

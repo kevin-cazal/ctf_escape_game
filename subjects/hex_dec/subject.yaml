@@ -1,0 +1,15 @@
+# Subject manifest, convention 2.0. Written for the escape game (Salle 2): three steps that
+# build on each other, hexadecimal, then decimal, then both mixed in one message.
+schema_version: '2.0'
+project:
+  name: Hexadécimal et décimal
+  slug: hex-dec
+  summary: ''
+  entrypoint: intro.md
+platform:
+  mode_default: instructor_led
+  validation_default: flag
+  points_default: 100
+documents:
+- intro.md
+- encodage.md

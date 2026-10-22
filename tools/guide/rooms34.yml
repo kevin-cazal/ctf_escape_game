@@ -1,0 +1,22 @@
+  room3:
+    <<: *room
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${ROOM3_PORT:-9183}:8000"]
+    environment:
+      <<: *room-env
+      SECRET_KEY: ${CTFD_SECRET_KEY}-room3
+      DATABASE_URL: mysql+pymysql://ctfd:${DB_PASSWORD}@db/room3
+      REDIS_URL: redis://cache:6379/3
+      PRESET_CONFIGS: '{"setup": true, "ctf_name": "Salle 3", "user_mode": "users", "ctf_theme": "core", "registration_visibility": "private", "score_visibility": "hidden", "account_visibility": "private", "challenge_visibility": "private"}'
+    volumes: [room3-uploads:/var/uploads]
+
+  room4:
+    <<: *room
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${ROOM4_PORT:-9184}:8000"]
+    environment:
+      <<: *room-env
+      SECRET_KEY: ${CTFD_SECRET_KEY}-room4
+      DATABASE_URL: mysql+pymysql://ctfd:${DB_PASSWORD}@db/room4
+      REDIS_URL: redis://cache:6379/4
+      PRESET_CONFIGS: '{"setup": true, "ctf_name": "Salle 4", "user_mode": "users", "ctf_theme": "core", "registration_visibility": "private", "score_visibility": "hidden", "account_visibility": "private", "challenge_visibility": "private"}'
+    volumes: [room4-uploads:/var/uploads]
+

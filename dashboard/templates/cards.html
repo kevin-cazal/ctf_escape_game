@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><title>Cartes équipes</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body class="print">
+  <p class="noprint"><button onclick="window.print()" class="primary">Print</button></p>
+  <div class="cards">
+  {% for t in state.teams %}
+    <div class="tcard">
+      <div class="tname">Équipe {{ t.login[6:] }}</div>
+      <div>Login : <b>{{ t.login }}</b></div>
+      <div>Mot de passe : <b>{{ t.password }}</b></div>
+      <div class="small">Le même dans toutes les salles. Garde cette carte avec toi !</div>
+    </div>
+  {% endfor %}
+  </div>
+</body>
+</html>

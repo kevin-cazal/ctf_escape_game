@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}{{ model.name or 'New room content' }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('prepare') }}#contents">← Prepare</a></p>
+<h1>{{ model.name or 'New room content' }}</h1>
+<p class="lead">
+  {% if model.source.kind in ('git', 'github') %}Loaded from <b>{{ model.source.repo }}@{{ model.source.ref }}</b> ({{ model.source.sha }}).{% elif model.source.kind == 'zip' %}Loaded from <b>{{ model.source.file }}</b>.{% elif model.source.kind == 'built-in' %}Built in.{% else %}Created in the dashboard.{% endif %}
+  {% if used %}Used by <b>{{ used|join(', ') }}</b>: push after saving to update {{ 'it' if used|length == 1 else 'them' }}.{% endif %}
+  Students see the steps in this order, each one unlocking the next.
+</p>
+{% if issues %}<div class="flash error">Not ready: {{ issues|join('; ') }}</div>{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="editor" id="editor"
+      action="{{ url_for('save_content', cid=model.id) if model.id else url_for('save_content') }}">
+  <section class="card">
+    <div class="inline">
+      <label class="grow">Name (students see it as the room's title)<input name="name" value="{{ model.name }}" required></label>
+      <label>Room code (typed at the PC if the dashboard is down)<input name="code" value="{{ secrets.code }}" class="short" required></label>
+    </div>
+  </section>
+
+  <div id="steps">
+  {% for st in model.steps %}
+    {% set key = st.id %}
+    <section class="card step-card" data-key="{{ key }}">
+      <input type="hidden" name="step" value="{{ key }}">
+      <div class="step-head">
+        <h2><span class="step num">{{ loop.index }}</span> Step</h2>
+        <span class="moves">
+          <button type="button" class="link" data-move="-1" title="Move up">↑</button>
+          <button type="button" class="link" data-move="1" title="Move down">↓</button>
+          <button type="button" class="link danger" data-remove title="Remove this step">Remove</button>
+        </span>
+      </div>
+      <label>Title<input name="title-{{ key }}" value="{{ st.title }}" required></label>
+      <label>Description (markdown)
+        <textarea name="description-{{ key }}" rows="8">{{ st.description }}</textarea></label>
+      {% if st.hints %}<p class="muted small">{{ st.hints|length }} hint{{ 's' if st.hints|length > 1 }} from the source, kept as they are.</p>{% endif %}
+      <div class="files" data-key="{{ key }}">
+        <span class="label">Attachments <span class="muted">(add as many as you need, or drop them here)</span></span>
+        {% for name in st.attachments %}
+        <span class="chip kept"><input type="hidden" name="keep-{{ key }}" value="{{ name }}">
+          <a href="{{ url_for('content_file', cid=model.id, sid=st.id, name=name) }}">{{ name }}</a>
+          <button type="button" class="x" title="Remove this file">×</button></span>
+        {% endfor %}
+        <button type="button" class="add-files">+ Add files</button>
+      </div>
+      <div class="inline">
+        <label class="grow">Flag<input name="flag-{{ key }}" value="{{ secrets.flags.get(st.id, '') }}" placeholder="ctf{...}" autocomplete="off"></label>
+        <label class="check"><input type="checkbox" name="case-{{ key }}" {{ 'checked' if st.case_insensitive }}> Ignore upper/lower case</label>
+      </div>
+    </section>
+  {% endfor %}
+  </div>
+
+  <div class="inline bar">
+    <button type="button" id="add-step">+ Add a step</button>
+    <span>
+      {% if model.id %}<a class="button" href="{{ url_for('export_content', cid=model.id) }}" title="Saved version, flags encrypted">Export as zip</a>{% endif %}
+      <button class="primary">Save</button>
+    </span>
+  </div>
+</form>
+
+<template id="step-template">
+  <section class="card step-card" data-key="__KEY__">
+    <input type="hidden" name="step" value="__KEY__">
+    <div class="step-head">
+      <h2><span class="step num"></span> Step</h2>
+      <span class="moves">
+        <button type="button" class="link" data-move="-1" title="Move up">↑</button>
+        <button type="button" class="link" data-move="1" title="Move down">↓</button>
+        <button type="button" class="link danger" data-remove title="Remove this step">Remove</button>
+      </span>
+    </div>
+    <label>Title<input name="title-__KEY__" required></label>
+    <label>Description (markdown)<textarea name="description-__KEY__" rows="8"></textarea></label>
+    <div class="files" data-key="__KEY__">
+      <span class="label">Attachments <span class="muted">(add as many as you need, or drop them here)</span></span>
+      <button type="button" class="add-files">+ Add files</button>
+    </div>
+    <div class="inline">
+      <label class="grow">Flag<input name="flag-__KEY__" placeholder="ctf{...}" autocomplete="off"></label>
+      <label class="check"><input type="checkbox" name="case-__KEY__" checked> Ignore upper/lower case</label>
+    </div>
+  </section>
+</template>
+{% endblock %}
+{% block scripts %}
+<script>
+const steps = document.getElementById("steps");
+function renumber() {
+  steps.querySelectorAll(".step-card").forEach((c, i) => c.querySelector(".num").textContent = i + 1);
+}
+document.getElementById("add-step").addEventListener("click", () => {
+  const key = "new" + Math.random().toString(36).slice(2, 8);
+  const html = document.getElementById("step-template").innerHTML.replaceAll("__KEY__", key);
+  steps.insertAdjacentHTML("beforeend", html);
+  renumber();
+  steps.lastElementChild.querySelector("input[name^=title]").focus();
+});
+steps.addEventListener("click", ev => {
+  const card = ev.target.closest(".step-card");
+  if (!card) return;
+  if (ev.target.dataset.move) {
+    const sib = ev.target.dataset.move === "-1" ? card.previousElementSibling : card.nextElementSibling;
+    if (sib) ev.target.dataset.move === "-1" ? steps.insertBefore(card, sib) : steps.insertBefore(sib, card);
+    renumber();
+  } else if (ev.target.hasAttribute("data-remove")) {
+    if (steps.children.length > 1 && confirm("Remove this step? Its flag and files go with it when you save.")) {
+      card.remove(); renumber();
+    }
+  }
+});
+renumber();
+
+/* Attachments. Every "+ Add files" (or drop) makes its own hidden file input, so a second
+   choice adds to the first instead of replacing it; each chosen file gets a chip with ×. */
+function addFiles(box, fileList) {
+  const input = document.createElement("input");
+  input.type = "file"; input.multiple = true; input.hidden = true;
+  input.name = "files-" + box.dataset.key;
+  const dt = new DataTransfer();
+  for (const f of fileList) dt.items.add(f);
+  input.files = dt.files;
+  box.insertBefore(input, box.querySelector(".add-files"));
+  for (const f of fileList) {
+    const chip = document.createElement("span");
+    chip.className = "chip new";
+    chip.append(f.name + " ");
+    const x = document.createElement("button");
+    x.type = "button"; x.className = "x"; x.title = "Remove this file"; x.textContent = "×";
+    x.addEventListener("click", () => {
+      const keep = new DataTransfer();
+      for (const g of input.files) if (g !== f) keep.items.add(g);
+      input.files = keep.files;
+      chip.remove();
+    });
+    chip.append(x);
+    box.insertBefore(chip, input);
+  }
+}
+steps.addEventListener("click", ev => {
+  const box = ev.target.closest(".files");
+  if (!box) return;
+  if (ev.target.classList.contains("add-files")) {
+    const picker = document.createElement("input");
+    picker.type = "file"; picker.multiple = true;
+    picker.addEventListener("change", () => { if (picker.files.length) addFiles(box, picker.files); });
+    picker.click();
+  } else if (ev.target.classList.contains("x") && ev.target.closest(".chip.kept")) {
+    ev.target.closest(".chip").remove();  // its hidden keep- input goes with it
+  }
+});
+steps.addEventListener("dragover", ev => {
+  const box = ev.target.closest(".files");
+  if (box) { ev.preventDefault(); box.classList.add("drop"); }
+});
+steps.addEventListener("dragleave", ev => { const box = ev.target.closest(".files"); if (box) box.classList.remove("drop"); });
+steps.addEventListener("drop", ev => {
+  const box = ev.target.closest(".files");
+  if (!box) return;
+  ev.preventDefault(); box.classList.remove("drop");
+  if (ev.dataTransfer.files.length) addFiles(box, ev.dataTransfer.files);
+});
+</script>
+{% endblock %}

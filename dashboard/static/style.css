@@ -1,0 +1,135 @@
+:root {
+  --bg: #f5f6f8; --card: #fff; --ink: #1d2433; --muted: #6b7385; --line: #e3e6ec;
+  --accent: #2f6fed; --ok: #1f9d55; --ok-bg: #e3f5ea; --in: #b26b00; --in-bg: #fff2d9;
+  --ko: #c62828; --ko-bg: #fde8e8; --out-bg: #f0f2f5;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 26px; margin: 0 0 6px; }
+h2 { font-size: 18px; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+h3 { font-size: 15px; margin: 0 0 8px; }
+a { color: var(--accent); }
+.lead { color: var(--muted); margin: 0 0 20px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.empty { color: var(--muted); font-style: italic; }
+
+.topbar { display: flex; align-items: center; gap: 24px; padding: 0 24px; height: 52px; background: var(--ink); color: #fff; }
+.topbar .brand { font-weight: 700; }
+.topbar nav { display: flex; gap: 4px; flex: 1; }
+.topbar nav a { color: #c9d1e3; text-decoration: none; padding: 8px 14px; border-radius: 8px; }
+.topbar nav a.active, .topbar nav a:hover { background: rgba(255,255,255,.12); color: #fff; }
+.topbar .link { color: #c9d1e3; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 18px; }
+.step { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 14px; }
+.flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 10px; white-space: pre-line; }
+.flash.ok { background: var(--ok-bg); color: #145c33; }
+.flash.error { background: var(--ko-bg); color: var(--ko); }
+
+button, .button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; text-decoration: none; display: inline-block; }
+button:hover, .button:hover { border-color: #b9c0cc; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { background: var(--ko); border-color: var(--ko); color: #fff; }
+button.link { border: 0; background: none; padding: 2px 4px; color: var(--accent); }
+button.link.danger { color: var(--ko); background: none; }
+input, select { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+input.short { width: 140px; } input.tiny { width: 70px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.inline { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.add { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.add h3 { width: 100%; }
+
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.actions { white-space: nowrap; text-align: right; }
+.badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--out-bg); color: var(--muted); }
+.badge.ok { background: var(--ok-bg); color: var(--ok); }
+.teams { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.team { background: var(--out-bg); border-radius: 8px; padding: 4px 10px; font-family: ui-monospace, monospace; font-size: 13px; }
+.health { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+.health ul { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.health li.ok { color: var(--ok); } .health li.ko { color: var(--ko); font-weight: 600; }
+.danger-zone { border-color: #f3c7c7; }
+
+.livebar { display: flex; align-items: center; gap: 16px; margin-bottom: 4px; }
+.livebar h1 { margin: 0; }
+.livebar form, .livebar .button { margin-left: auto; }
+.status { font-size: 13px; padding: 3px 10px; border-radius: 12px; background: var(--out-bg); color: var(--muted); }
+.status.running { background: var(--ok-bg); color: var(--ok); }
+.status.over { background: var(--ink); color: #fff; }
+.legend { font-size: 13px; color: var(--muted); margin: -12px 0 16px; display: flex; gap: 16px; }
+.legend span { white-space: nowrap; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.gridwrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.grid th small { display: block; text-transform: none; letter-spacing: 0; font-weight: 400; }
+.grid td, .grid th { text-align: center; border-left: 1px solid var(--line); }
+.grid th.team { text-align: left; font-size: 14px; text-transform: none; color: var(--ink); letter-spacing: 0; white-space: nowrap; }
+.grid td { min-width: 120px; height: 56px; }
+.c-out { background: var(--out-bg); } .c-in { background: var(--in-bg); } .c-done { background: var(--ok-bg); } .c-err { background: var(--ko-bg); }
+i.c-out { border: 1px solid var(--line); }
+.c-in .time { color: var(--in); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 17px; }
+.c-done .time { color: var(--ok); font-weight: 700; font-variant-numeric: tabular-nums; }
+.grid .fails { display: block; font-size: 11px; color: var(--muted); }
+.grid .total { font-weight: 700; }
+button.letin { padding: 6px 12px; font-size: 13px; }
+
+.ranking td { font-size: 17px; }
+.ranking .rank { font-weight: 800; width: 60px; }
+.ranking .time { font-variant-numeric: tabular-nums; }
+.ranking tr.top1 td { background: #fff6d6; } .ranking tr.top2 td { background: #f1f3f6; } .ranking tr.top3 td { background: #fbeee4; }
+body.screen main { max-width: none; padding: 40px 60px; }
+body.screen h1 { font-size: 48px; }
+body.screen .ranking td { font-size: 32px; padding: 14px 18px; }
+body.screen .ranking th { font-size: 18px; }
+
+body.centered main { display: grid; place-items: center; min-height: 100vh; }
+.login { width: 340px; display: flex; flex-direction: column; gap: 14px; }
+
+body.print { background: #fff; }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
+.tcard { border: 2px dashed #999; border-radius: 10px; padding: 16px; font-size: 18px; break-inside: avoid; }
+.tcard .tname { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+@media print { .noprint { display: none; } }
+
+/* Waiting: a team at a PC that wants in. Blue, the one action staff should take next. */
+.c-wait { background: #e6ecff; box-shadow: inset 0 0 0 2px var(--accent); }
+i.c-wait { box-shadow: none; }
+.c-wait .waited { display: block; font-size: 12px; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.waiting { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; background: #e6ecff;
+  border: 2px solid var(--accent); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
+.waiting .wtitle { font-weight: 700; color: var(--accent); margin-right: 6px; }
+.waiting .wteam { background: #fff; border-radius: 10px; padding: 4px 6px 4px 12px; font-variant-numeric: tabular-nums; }
+
+/* Rooms with several steps, and teams released from a room they had not finished. */
+.grid .steps { font-size: 12px; font-weight: 700; color: var(--in); background: #fff; border-radius: 8px; padding: 1px 6px; }
+.c-paused { background: repeating-linear-gradient(135deg, #f0f2f5 0 8px, #e6e9ef 8px 16px); }
+.c-paused .time { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.c-paused .steps { color: var(--muted); }
+.c-paused .letin { display: block; margin: 4px auto 0; }
+.grid .acts { display: block; }
+
+/* Room contents: library table and editor */
+.badge.ko { background: var(--ko-bg); color: var(--ko); }
+.editor label { margin-bottom: 12px; }
+.editor label.grow { flex: 1; }
+.editor input[name^=title], .editor input[name=name], .editor input[name^=flag] { width: 100%; }
+.editor textarea { font: 14px/1.5 ui-monospace, monospace; padding: 10px; border: 1px solid var(--line); border-radius: 8px; width: 100%; resize: vertical; }
+.editor label.check { flex-direction: row; align-items: center; gap: 6px; color: var(--ink); }
+.step-head { display: flex; align-items: center; justify-content: space-between; }
+.step-head .moves button { font-size: 15px; }
+.files { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 13px; }
+.files .label { color: var(--muted); width: 100%; }
+.files label.file { flex-direction: row; align-items: center; gap: 4px; margin: 0; background: var(--out-bg); padding: 4px 10px; border-radius: 8px; }
+.editor .bar { position: sticky; bottom: 0; background: var(--bg); padding: 12px 0; justify-content: space-between; }
+.files { border: 1px dashed var(--line); border-radius: 10px; padding: 10px; }
+.files.drop { border-color: var(--accent); background: #e6ecff; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--out-bg); border-radius: 8px; padding: 3px 4px 3px 10px; font-size: 13px; }
+.chip.new { background: #e6ecff; }
+.chip .x { border: 0; background: none; padding: 0 6px; font-size: 16px; line-height: 1; color: var(--muted); cursor: pointer; }
+.chip .x:hover { color: var(--ko); }
+.add-files { font-size: 13px; padding: 4px 10px; }
+/* `display: flex` above would otherwise beat the `hidden` attribute and show "0 teams waiting". */
+.waiting[hidden] { display: none; }

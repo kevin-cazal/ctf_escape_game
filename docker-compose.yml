@@ -1,0 +1,123 @@
+# CTF escape game: one CTFd per room + one staff dashboard.
+#
+#   cp .env.example .env    # then fill it in
+#   docker compose up -d --build
+#
+# Every port listens on BIND_ADDRESS (loopback by default): put your own HTTPS reverse proxy in
+# front, one hostname per room and one for the dashboard. Then open the dashboard, and add each
+# room with its public URL and ROOMS_ADMIN_TOKEN.
+#
+# Default: 2 rooms, 2 teams, 3 built-in room contents (Agent 064 and Hexadécimal et décimal in the
+# rooms, Faux texte spare).
+#
+# Adding a room: copy the room2 block below as room3, and in it change the 3 to every place the 2
+# was (port variable, SECRET_KEY suffix, database name, Redis db number, "Salle 2", volume name);
+# then add room3-uploads to the volumes at the bottom, ROOM3_PORT and ROOM3_URL to .env.
+
+name: ctf-escape-game
+
+x-room: &room
+  # CTFd + the workshop plugin (Manta-Epitech-Academy/ctfd-workshop-platform), the image the
+  # workshop platform runs. Built here from its public repo, pinned, because the published
+  # ghcr.io package needs an organisation login.
+  build:
+    context: https://github.com/Manta-Epitech-Academy/ctfd-custom.git#${CTFD_CUSTOM_REF:-b14d09e1cf5e913ab04585df59d09a315325d6e9}
+  image: ctf-escape-game/ctfd-custom:${CTFD_CUSTOM_REF:-b14d09e1cf5e913ab04585df59d09a315325d6e9}
+  pull_policy: build
+  restart: unless-stopped
+  depends_on: [db, cache]
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+
+x-room-env: &room-env
+  UPLOAD_FOLDER: /var/uploads
+  WORKERS: "1"
+  REVERSE_PROXY: "true"
+  ACCESS_LOG: "-"
+  ERROR_LOG: "-"
+  # No setup wizard: the admin and its API token come from configuration (stock CTFd 3.8,
+  # [management] in CTFd/config.ini). The token is what the dashboard is given.
+  PRESET_ADMIN_NAME: admin
+  PRESET_ADMIN_EMAIL: admin@escape-game.example.org
+  PRESET_ADMIN_PASSWORD: ${ROOMS_ADMIN_PASSWORD:?set ROOMS_ADMIN_PASSWORD in .env}
+  PRESET_ADMIN_TOKEN: ${ROOMS_ADMIN_TOKEN:?set ROOMS_ADMIN_TOKEN in .env}
+
+services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    image: ctf-escape-game/dashboard:latest
+    restart: unless-stopped
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${DASHBOARD_PORT:-9180}:8000"]
+    environment:
+      SECRET_KEY: ${DASHBOARD_SECRET_KEY:?set DASHBOARD_SECRET_KEY in .env}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?set DASHBOARD_PASSWORD in .env}
+      GPG_PASSPHRASE: ${GPG_PASSPHRASE:?set GPG_PASSPHRASE in .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      # First start only: the rooms the dashboard registers by itself (public URLs, the ones
+      # students open), with the rooms' admin token. Leave empty to add rooms by hand. The
+      # dashboard itself reaches room N inside the compose network, at http://roomN:8000.
+      ROOM1_URL: ${ROOM1_URL:-}
+      ROOM2_URL: ${ROOM2_URL:-}
+      ROOM3_URL: ${ROOM3_URL:-}
+      ROOM4_URL: ${ROOM4_URL:-}
+      ROOM5_URL: ${ROOM5_URL:-}
+      ROOM6_URL: ${ROOM6_URL:-}
+      ROOMS_ADMIN_TOKEN: ${ROOMS_ADMIN_TOKEN}
+    volumes: [dashboard-data:/data]
+
+  room1:
+    <<: *room
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${ROOM1_PORT:-9181}:8000"]
+    environment:
+      <<: *room-env
+      SECRET_KEY: ${CTFD_SECRET_KEY:?set CTFD_SECRET_KEY in .env}-room1
+      DATABASE_URL: mysql+pymysql://ctfd:${DB_PASSWORD:?set DB_PASSWORD in .env}@db/room1
+      REDIS_URL: redis://cache:6379/1
+      PRESET_CONFIGS: '{"setup": true, "ctf_name": "Salle 1", "user_mode": "users", "ctf_theme": "core", "registration_visibility": "private", "score_visibility": "hidden", "account_visibility": "private", "challenge_visibility": "private"}'
+    volumes: [room1-uploads:/var/uploads]
+
+  room2:
+    <<: *room
+    ports: ["${BIND_ADDRESS:-127.0.0.1}:${ROOM2_PORT:-9182}:8000"]
+    environment:
+      <<: *room-env
+      SECRET_KEY: ${CTFD_SECRET_KEY}-room2
+      DATABASE_URL: mysql+pymysql://ctfd:${DB_PASSWORD}@db/room2
+      REDIS_URL: redis://cache:6379/2
+      PRESET_CONFIGS: '{"setup": true, "ctf_name": "Salle 2", "user_mode": "users", "ctf_theme": "core", "registration_visibility": "private", "score_visibility": "hidden", "account_visibility": "private", "challenge_visibility": "private"}'
+    volumes: [room2-uploads:/var/uploads]
+
+  # One MariaDB and one Redis for all rooms: one database / one Redis db number per room.
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      MARIADB_USER: ctfd
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
+    configs:
+      - source: db-init
+        target: /docker-entrypoint-initdb.d/rooms.sql
+    volumes: [db-data:/var/lib/mysql]
+
+  cache:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+configs:
+  db-init:
+    # Runs once, when the database volume is created. Each room's CTFd creates its own database
+    # (room1, room2, ...) on first start; this lets it.
+    content: |
+      GRANT ALL PRIVILEGES ON `room%`.* TO 'ctfd'@'%';
+
+volumes:
+  dashboard-data:
+  db-data:
+  room1-uploads:
+  room2-uploads:

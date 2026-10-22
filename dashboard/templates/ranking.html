@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Classement{% endblock %}
+{% block body_class %}epi {{ '' if screen else 'epi-staff' }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='epitech.css') }}">{% endblock %}
+{% block content %}
+{% if not screen %}
+<div class="livebar staff-tools">
+  <span class="muted">This is what the projector shows.</span>
+  <a class="button" href="{{ url_for('ranking', screen=1) }}" target="_blank">Open the projector view</a>
+</div>
+{% endif %}
+<header class="epi-band">
+  <img class="logo" src="{{ url_for('static', filename='epi/brand/EPITECH-LOGO-BLANC-2025.svg') }}" alt="Epitech">
+  <h1 class="epi-title" id="title">Classement</h1>
+  <div class="epi-sub"><span id="status" class="epi-pill">…</span><span id="summary"></span></div>
+</header>
+<section class="epi-board">
+  <div id="ranking" class="epi-rows"></div>
+  <div class="epi-legend">
+    <span><i class="epi-pip done"></i>salle réussie</span>
+    <span><i class="epi-pip in"></i>salle en cours</span>
+    <span>Classement : le plus de salles réussies, puis le plus d'étapes, puis le temps le plus court.</span>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='common.js') }}"></script>
+<script src="{{ url_for('static', filename='ranking.js') }}"></script>
+{% endblock %}

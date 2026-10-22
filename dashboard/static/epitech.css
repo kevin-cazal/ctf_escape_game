@@ -1,0 +1,101 @@
+/* The Epitech charter on the ranking: what the students see on the projector.
+   Tokens, fonts and logo come from the workshop platform (ctfd-workshop-platform,
+   plugins/workshop/assets/epitech-theme.css and DESIGN.md, themselves ported from jump),
+   copied into static/epi/ at build time. Same values, same names. */
+@font-face { font-family: "IBM Plex Sans Variable"; font-style: normal; font-display: swap;
+  font-weight: 100 700; src: url(epi/fonts/ibm-plex-sans-latin-wght-normal.woff2) format("woff2-variations"); }
+@font-face { font-family: "Anton"; font-style: normal; font-display: swap; font-weight: 400;
+  src: url(epi/fonts/anton-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Space Mono"; font-style: normal; font-display: swap; font-weight: 400;
+  src: url(epi/fonts/space-mono-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Space Mono"; font-style: normal; font-display: swap; font-weight: 700;
+  src: url(epi/fonts/space-mono-latin-700-normal.woff2) format("woff2"); }
+
+:root {
+  --epi-blue: #013afb;        /* the logo: brand surfaces only, never changes */
+  --epi-tech: #00ff97;
+  --epi-tech-ink: #007a46;
+  --epi-together: #ff5f3a;
+  --epi-grey-900: #0b0e1a;    /* jump's "chrome" */
+  --epi-bg: #f6f7fb;
+  --epi-card: #ffffff;
+  --epi-border: #d9dce8;
+  --epi-muted: #555b71;
+  --epi-ink: #181818;
+}
+
+body.epi { background: var(--epi-bg); color: var(--epi-ink);
+  font-family: "IBM Plex Sans Variable", system-ui, sans-serif; }
+body.epi:not(.epi-staff) main { max-width: none; padding: 0; }
+
+/* The blue band: jump's blueprint grid (48px, white 4.5%) and the charter's pixel squares. */
+.epi-band { position: relative; overflow: hidden; background-color: var(--epi-blue); color: #fff;
+  background-image: linear-gradient(rgb(255 255 255 / .045) 1px, transparent 1px),
+                    linear-gradient(90deg, rgb(255 255 255 / .045) 1px, transparent 1px);
+  background-size: 48px 48px; padding: 28px 56px 34px; }
+.epi-band::after { content: ""; position: absolute; top: 22px; right: 40px; width: 7rem; height: 7rem;
+  background-image: linear-gradient(rgb(255 255 255 / .5) 0 0), linear-gradient(rgb(255 255 255 / .25) 0 0),
+                    linear-gradient(rgb(255 255 255 / .35) 0 0);
+  background-repeat: no-repeat; background-size: 4.25rem 4.25rem, 2.1rem 4.25rem, 2.1rem 2.1rem;
+  background-position: top right, top 0 right 4.9rem, top 4.9rem right 0; }
+.epi-band .logo { height: 34px; display: block; margin-bottom: 22px; }
+.epi-title { font-family: "Anton", sans-serif; text-transform: uppercase; font-weight: 400;
+  font-size: 3.4rem; line-height: 1.1; margin: -.375rem 0; padding: .375rem 0; letter-spacing: .01em; }
+.epi-title::after { content: "_"; color: var(--epi-tech); margin-left: .05em; }  /* jump's TitleCursor */
+.epi-sub { display: flex; align-items: center; gap: 14px; margin-top: 10px; font-size: 1.05rem; color: rgb(255 255 255 / .85); }
+.epi-pill { font-family: "Space Mono", monospace; font-weight: 700; font-size: .8rem; text-transform: uppercase;
+  letter-spacing: .06em; padding: 4px 12px; border-radius: 999px; background: rgb(255 255 255 / .15); color: #fff; }
+.epi-pill.live { background: var(--epi-tech); color: var(--epi-grey-900); }
+.epi-pill.live::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--epi-grey-900); margin-right: 8px; vertical-align: 1px; animation: epi-blink 1.4s infinite; }
+.epi-pill.over { background: var(--epi-grey-900); color: var(--epi-tech); }
+@keyframes epi-blink { 50% { opacity: .2; } }
+
+/* The board */
+.epi-board { padding: 30px 56px 50px; }
+body.epi-staff .staff-tools { margin-bottom: 14px; }
+.epi-rows { display: flex; flex-direction: column; gap: 10px; }
+.epi-row { display: grid; grid-template-columns: 90px minmax(200px, 1fr) auto 170px; align-items: center; gap: 24px;
+  background: var(--epi-card); border: 1px solid var(--epi-border); border-radius: 14px; padding: 14px 26px; }
+.epi-rank { font-family: "Anton", sans-serif; font-size: 2.6rem; line-height: 1; color: var(--epi-muted); }
+.epi-team { font-weight: 600; font-size: 1.6rem; }
+.epi-now { display: block; font-size: .95rem; font-weight: 400; color: var(--epi-muted); margin-top: 2px; }
+.epi-now b { color: var(--epi-blue); font-weight: 600; }
+.epi-rooms { display: flex; gap: 8px; align-items: center; }
+.epi-pip { width: 30px; height: 30px; border-radius: 6px; border: 2px solid var(--epi-border); background: #fff;
+  display: grid; place-items: center; font-family: "Space Mono", monospace; font-size: .7rem; font-weight: 700; color: var(--epi-muted); }
+.epi-pip.done { background: var(--epi-tech); border-color: var(--epi-tech); color: var(--epi-grey-900); }
+.epi-pip.in { border-color: var(--epi-blue); color: var(--epi-blue); animation: epi-pulse 1.6s infinite; }
+.epi-pip.paused { border-style: dashed; }
+@keyframes epi-pulse { 50% { box-shadow: 0 0 0 5px rgb(1 58 251 / .15); } }
+.epi-time { font-family: "Space Mono", monospace; font-weight: 700; font-size: 1.7rem; text-align: right; font-variant-numeric: tabular-nums; }
+.epi-time small { display: block; font-size: .75rem; font-weight: 400; color: var(--epi-muted); text-transform: uppercase; letter-spacing: .05em; }
+
+/* Podium: the leader on the brand blue, the next two outlined in it. */
+.epi-row.p1 { background: var(--epi-blue); border-color: var(--epi-blue); color: #fff; }
+.epi-row.p1 .epi-rank { color: var(--epi-tech); }
+.epi-row.p1 .epi-now, .epi-row.p1 .epi-time small { color: rgb(255 255 255 / .8); }
+.epi-row.p1 .epi-now b { color: #fff; }
+.epi-row.p1 .epi-pip { background: transparent; border-color: rgb(255 255 255 / .45); color: #fff; }
+.epi-row.p1 .epi-pip.done { background: var(--epi-tech); border-color: var(--epi-tech); color: var(--epi-grey-900); }
+.epi-row.p1 .epi-pip.in { border-color: #fff; }
+.epi-row.p2, .epi-row.p3 { border: 2px solid var(--epi-blue); }
+.epi-row.p2 .epi-rank, .epi-row.p3 .epi-rank { color: var(--epi-blue); }
+.epi-empty { color: var(--epi-muted); font-size: 1.2rem; }
+.epi-legend { display: flex; gap: 22px; margin-top: 22px; color: var(--epi-muted); font-size: .95rem; align-items: center; }
+.epi-legend .epi-pip { width: 18px; height: 18px; display: inline-grid; vertical-align: -3px; margin-right: 6px; }
+
+/* Inside the staff dashboard (not the projector): same board, smaller. */
+body.epi-staff .epi-band { padding: 20px 28px 24px; border-radius: 14px; }
+body.epi-staff .epi-band::after { display: none; }
+body.epi-staff .epi-title { font-size: 2.2rem; }
+body.epi-staff .epi-board { padding: 18px 0 0; }
+body.epi-staff .epi-row { padding: 10px 20px; }
+body.epi-staff .epi-team { font-size: 1.2rem; }
+body.epi-staff .epi-rank { font-size: 2rem; }
+body.epi-staff .epi-time { font-size: 1.3rem; }
+@media (max-width: 900px) {
+  .epi-band, .epi-board { padding-left: 20px; padding-right: 20px; }
+  .epi-row { grid-template-columns: 50px 1fr auto; }
+  .epi-rooms { display: none; }
+}

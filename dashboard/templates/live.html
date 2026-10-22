@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Live{% endblock %}
+{% block content %}
+<div class="livebar">
+  <h1>Live</h1>
+  <span id="status" class="status"></span>
+  <form method="post" action="{{ url_for('game') }}">
+    {% if state.ended_at %}
+      <button name="action" value="reopen">Reopen the game</button>
+    {% else %}
+      <button name="action" value="end" class="danger" onclick="return confirm('End the game? The ranking becomes final.')">End the game</button>
+    {% endif %}
+  </form>
+</div>
+<p class="lead">Click <b>Let in</b> when a team sits down at a room: its timer starts at that moment.
+A team that clicked « J'ai lu » at a room shows as <b>waiting</b> there.</p>
+<p class="legend"><span><i class="c-out"></i>not entered</span><span><i class="c-wait"></i>waiting</span><span><i class="c-in"></i>in the room</span><span><i class="c-paused"></i>released</span><span><i class="c-done"></i>done</span></p>
+<div id="waiting" class="waiting" hidden></div>
+<div id="errors"></div>
+<div class="gridwrap"><table id="grid" class="grid"></table></div>
+<p id="empty" class="empty" hidden>No room is ready. Go to <a href="{{ url_for('prepare') }}">Prepare</a> and push.</p>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='common.js') }}"></script>
+<script src="{{ url_for('static', filename='live.js') }}"></script>
+{% endblock %}

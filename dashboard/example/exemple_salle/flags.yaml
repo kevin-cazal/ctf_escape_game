@@ -1,0 +1,8 @@
+# Example only. In a public repository commit flags.yaml.gpg instead (see README.md).
+flags:
+  etape1:
+    value: ctf{exemple}
+    case_insensitive: true
+  etape2:
+    value: ctf{elpmexe}
+    case_insensitive: true

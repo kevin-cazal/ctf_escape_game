@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Prepare{% endblock %}
+{% block content %}
+<h1>Prepare the event</h1>
+<p class="lead">Do this before the day: add one CTFd instance per room, choose each room's challenge,
+create the teams, then <strong>push</strong> and run the <strong>check</strong>.
+Each room's content is imported by the workshop platform's own importer.</p>
+
+<section class="card">
+  <h2><span class="step">1</span> Rooms</h2>
+  {% if state.rooms %}
+  <table class="rooms">
+    <thead><tr><th>Room</th><th>Instance</th><th>Content</th><th>Pushed</th><th></th></tr></thead>
+    <tbody>
+    {% for r in state.rooms %}
+      <tr>
+        <td><input name="name" value="{{ r.name }}" class="short" form="f-{{ r.id }}"></td>
+        <td><a href="{{ r.url }}" target="_blank" rel="noopener">{{ r.url.split('//')[1] }}</a></td>
+        <td>
+          <select name="subject" form="f-{{ r.id }}">
+            <option value="">— choose —</option>
+            {% for c in catalog %}
+            <option value="{{ c.id }}" {{ 'selected' if r.subject == c.id }} {{ 'disabled' if not c.ready and r.subject != c.id }}>
+              {{ c.name }} · {{ c.steps|length }} step{{ 's' if c.steps|length > 1 }}{% if not c.ready %} (not ready){% elif c.id in used and r.subject != c.id %} (also in {{ used[c.id]|join(', ') }}){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>{% if r.door_id %}<span class="badge ok">yes</span>
+              <a href="{{ r.url }}/admin/workshop/stats" target="_blank" rel="noopener" class="small">stats</a>
+              <a href="{{ r.url }}/admin/workshop/submissions" target="_blank" rel="noopener" class="small">submissions</a>
+            {% else %}<span class="badge">not yet</span>{% endif %}</td>
+        <td class="actions">
+          <form method="post" action="{{ url_for('edit_room', room_id=r.id) }}" id="f-{{ r.id }}">
+          <button name="action" value="save">Save</button>
+          <button name="action" value="remove" class="link danger" onclick="return confirm('Remove {{ r.name }} from the dashboard? The instance itself is not touched.')">Remove</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No room yet. Add the first CTFd instance below.</p>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('add_room') }}" class="inline add">
+    <h3>Add a CTFd instance</h3>
+    <label>Instance URL <input name="url" type="url" placeholder="https://room1.example.org" required></label>
+    <label>Admin token <input name="token" type="password" required autocomplete="off"></label>
+    <label>Room name <input name="name" placeholder="Salle {{ state.rooms|length + 1 }}" class="short"></label>
+    <label title="Only if the dashboard cannot reach the room at its public URL, e.g. a test on one machine with localhost URLs">Internal URL (optional)
+      <input name="api_url" placeholder="http://room{{ state.rooms|length + 1 }}:8000" class="short"></label>
+    <button class="primary">Add</button>
+  </form>
+</section>
+
+<section class="card" id="contents">
+  <h2><span class="step">2</span> Room contents</h2>
+  <p class="muted">What a room holds: one or more steps, each with its text, its files and its flag.
+  Choose a content for each room in step 1, then push.</p>
+  <table class="contents">
+    <thead><tr><th>Content</th><th>Steps</th><th>From</th><th>In rooms</th><th></th></tr></thead>
+    <tbody>
+    {% for c in catalog %}
+      <tr>
+        <td><a href="{{ url_for('edit_content', cid=c.id) }}"><b>{{ c.name }}</b></a>
+            {% if not c.ready %}<span class="badge ko">not ready</span>{% endif %}</td>
+        <td>{{ c.steps|length }}</td>
+        <td class="muted small">{% if c.source.kind in ('git', 'github') %}{{ c.source.repo }}@{{ c.source.ref }} ({{ c.source.sha }}){% elif c.source.kind == 'zip' %}{{ c.source.file }}{% else %}{{ c.source.kind }}{% endif %}</td>
+        <td>{{ used.get(c.id, [])|join(', ') or '–' }}</td>
+        <td class="actions">
+          <a class="button" href="{{ url_for('edit_content', cid=c.id) }}">Edit</a>
+          <a class="button" href="{{ url_for('export_content', cid=c.id) }}" title="A workshop subject, flags encrypted">Export zip</a>
+          {% if not used.get(c.id) %}
+          <form method="post" action="{{ url_for('delete_content', cid=c.id) }}" style="display:inline">
+            <button class="link danger" onclick="return confirm('Delete {{ c.name }}?')">Delete</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="inline add">
+    <a class="button primary" href="{{ url_for('new_content') }}">Create a room content</a>
+  </div>
+  <div class="add">
+    <h3>Load a workshop subject</h3>
+    <p class="muted small">A subject in the workshop platform's format (a <code>subject.yaml</code> at its root),
+      whose steps are all flag steps. Encrypted flags are opened with the usual passphrase; any flag still missing is typed in the editor.
+      <a href="{{ url_for('example_zip') }}">Download an example zip</a>: a 2-step room with an attachment, an image, a hint and a README that explains the format.</p>
+    <form method="post" action="{{ url_for('load_content') }}" class="inline">
+      <label>From a public git repository
+        <input name="repo" placeholder="owner/repo (GitHub), or https://gitlab.com/... .git" required size="44"></label>
+      <label>Branch or tag <input name="ref" placeholder="default" class="short"></label>
+      <button>Load</button>
+    </form>
+    <form method="post" action="{{ url_for('load_content') }}" enctype="multipart/form-data" class="inline" style="margin-top:10px">
+      <label>Or from a zip file <input type="file" name="zip" accept=".zip,application/zip" required></label>
+      <button>Load</button>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <h2><span class="step">3</span> Teams</h2>
+  <form method="post" action="{{ url_for('set_teams') }}" class="inline">
+    <label>Number of teams <input name="count" type="number" min="1" max="99" value="{{ state.teams|length or 2 }}" class="tiny"></label>
+    <button>Set</button>
+    {% if state.teams %}<a href="{{ url_for('cards') }}" target="_blank" class="button">Print team cards</a>{% endif %}
+  </form>
+  {% if state.teams %}
+  <p class="muted">Each team has one login and password, the same in every room. Existing passwords are kept when you change the number.</p>
+  <div class="teams">
+    {% for t in state.teams %}<span class="team"><b>{{ t.login }}</b> {{ t.password }}</span>{% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2><span class="step">4</span> Push and check</h2>
+  <p class="muted">Push creates the team accounts in every instance, then imports each room's content
+  (welcome page, door step, challenge). It is safe to run again: results are kept.</p>
+  <div class="inline">
+    <form method="post" action="{{ url_for('push') }}"><button class="primary">Push to all rooms</button></form>
+    <form method="post" action="{{ url_for('health') }}"><button>Check all rooms</button></form>
+  </div>
+  {% if health %}
+  <div id="health" class="health">
+    {% for r in state.rooms %}
+    <div><h3>{{ r.name }}</h3>
+      <ul>{% for ok, label in health.get(r.id, []) %}<li class="{{ 'ok' if ok else 'ko' }}">{{ '✔' if ok else '✘' }} {{ label }}</li>{% endfor %}</ul>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+<section class="card danger-zone">
+  <h2>After a rehearsal</h2>
+  <form method="post" action="{{ url_for('reset') }}" class="inline">
+    <label>Delete every result in every room. Type RESET <input name="confirm" class="short" autocomplete="off"></label>
+    <button class="danger">Reset results</button>
+  </form>
+</section>
+{% endblock %}
