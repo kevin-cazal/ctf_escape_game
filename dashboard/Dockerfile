@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY vendor/ctfd-workshop-platform/tools/sync_subject.py vendor/ctfd-workshop-platform/tools/ws_parser.py /app/workshop-tools/
 # ...and the plugin's GitHub fetcher, for "Load from a public git repository".
 COPY vendor/ctfd-workshop-platform/plugins/workshop/source.py /app/workshop-plugin/
-# Room contents. Answers are only present encrypted (*.yaml.gpg, see .dockerignore).
+# The built-in room contents (demo rooms: their answers are public on purpose).
 COPY subjects /app/subjects
 COPY dashboard /app
 # Epitech charter from the platform (fonts with their licence, 2025 logos): the ranking that the

@@ -2,8 +2,6 @@
 .env
 .gpg_passphrase.local
 **/__pycache__
-subjects/*/flags.yaml
-subjects/*/checkpoint_codes.yaml
 vendor/ctfd-workshop-platform/*
 !vendor/ctfd-workshop-platform/tools
 !vendor/ctfd-workshop-platform/plugins

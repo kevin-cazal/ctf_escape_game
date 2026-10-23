@@ -1,6 +1,3 @@
-# Plaintext answers never enter git: only the .gpg files do.
-subjects/*/flags.yaml
-subjects/*/checkpoint_codes.yaml
 .env
 .gpg_passphrase.local
 __pycache__/

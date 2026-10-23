@@ -1,0 +1,11 @@
+# Demo room: the answers are public on purpose. For a real room, commit only flags.yaml.gpg.
+flags:
+  hex:
+    case_insensitive: true
+    value: ctf{PIRATE}
+  dec:
+    case_insensitive: true
+    value: ctf{TRESOR}
+  mixed:
+    case_insensitive: true
+    value: ctf{bravo agent secret}

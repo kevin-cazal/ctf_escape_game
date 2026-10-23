@@ -1,4 +1,5 @@
-# Example only. In a public repository commit flags.yaml.gpg instead (see README.md).
+# Demo room: the answers are public on purpose. For a real room, commit only flags.yaml.gpg
+# (see README.md).
 flags:
   etape1:
     value: ctf{exemple}

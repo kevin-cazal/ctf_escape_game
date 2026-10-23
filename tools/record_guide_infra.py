@@ -100,7 +100,7 @@ with sync_playwright() as p:
         "ROOM1_PORT=9181", "ROOM2_PORT=9182", "ROOM3_PORT=9183", "ROOM4_PORT=9184",
         "DASHBOARD_PASSWORD=demo-escape-game",
         "DASHBOARD_SECRET_KEY=$(openssl rand -hex 32)",
-        "GPG_PASSPHRASE=$(cat ../passphrase.txt)",
+        "GPG_PASSPHRASE=$(openssl rand -hex 16)",
         "COOKIE_SECURE=false",
         "ROOMS_ADMIN_PASSWORD=$(openssl rand -hex 12)",
         "ROOMS_ADMIN_TOKEN=ctfd_$(openssl rand -hex 32)",
@@ -113,7 +113,7 @@ with sync_playwright() as p:
     ]
     for line in env_lines:
         if line.startswith("GPG"):
-            caption(t, "3 · La phrase de passe des réponses vous est donnée à part : ici, dans un fichier")
+            caption(t, "3 · Une phrase de passe à vous : elle chiffre les réponses que garde le tableau de bord")
         if line.startswith("COOKIE"):
             caption(t, "3 · En local, sans HTTPS : COOKIE_SECURE=false")
         if line.startswith("ROOMS_ADMIN_TOKEN"):

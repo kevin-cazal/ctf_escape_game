@@ -7,8 +7,8 @@
 # front, one hostname per room and one for the dashboard. Then open the dashboard, and add each
 # room with its public URL and ROOMS_ADMIN_TOKEN.
 #
-# Default: 2 rooms, 2 teams, 3 built-in room contents (Agent 064 and Hexadécimal et décimal in the
-# rooms, Faux texte spare).
+# Default: 2 rooms, 2 teams, and the 2 demo room contents of subjects/ (Exemple de salle in Salle
+# 1, Hexadécimal et décimal in Salle 2).
 #
 # Adding a room: copy the room2 block below as room3, and in it change the 3 to every place the 2
 # was (port variable, SECRET_KEY suffix, database name, Redis db number, "Salle 2", volume name);

@@ -14,7 +14,7 @@ See `PLAN.md` for every decision and why.
 ```bash
 git clone --recursive https://github.com/kevin-cazal/ctf_escape_game.git
 cd ctf_escape_game
-cp .env.example .env      # fill it in (see the comments); GPG_PASSPHRASE is given out of band
+cp .env.example .env      # fill it in (see the comments)
 docker compose up -d --build
 ```
 
@@ -24,7 +24,7 @@ on `127.0.0.1` (`BIND_ADDRESS`): put your HTTPS reverse proxy in front, one host
 used on the test deployment. For a test on one machine without a proxy, use
 `ROOMn_URL=http://localhost:918n` and `COOKIE_SECURE=false`.
 
-By default you get **2 rooms, 2 teams and 3 built-in room contents**. On its first start the
+By default you get **2 rooms, 2 teams and the 2 demo room contents**. On its first start the
 dashboard registers the rooms given in `ROOM1_URL`, `ROOM2_URL`… with `ROOMS_ADMIN_TOKEN` (the
 admin token every room's CTFd starts with), and creates `equipe01` and `equipe02`.
 
@@ -47,20 +47,17 @@ creates its own database on first start.
 
 ## Room contents
 
-A room content is a workshop **subject**, reduced to flag steps. The **example zip** linked on the
-Prepare page (`dashboard/example/exemple_salle`) has a README with the whole format: one
+A room content is a workshop **subject**, reduced to flag steps. `subjects/exemple_salle` (also
+the **example zip** linked on the Prepare page) has a README with the whole format: one
 `## Title` + `<!-- ws: ... -->` marker per step, attachments = the files in `files/<step id>/`,
-images in the text anywhere else with a relative path, flags in `flags.yaml` (commit only the
-encrypted `flags.yaml.gpg` in a public repository).
+images in the text anywhere else with a relative path, flags in `flags.yaml` (in a public
+repository of real challenges, commit only the encrypted `flags.yaml.gpg`).
 
-`subjects/` holds the 3 built-ins, copied into the dashboard's library on first start: **Agent
-064** and **Faux texte** (from `Manta-Epitech-Academy/osint_investigator_ctf_challenges`) and
-**Hexadécimal et décimal** (3 steps). Their answers exist only as `*.yaml.gpg`:
-
-```bash
-gpg -d subjects/hex_dec/flags.yaml.gpg
-gpg -c --cipher-algo AES256 -o subjects/hex_dec/flags.yaml.gpg subjects/hex_dec/flags.yaml
-```
+`subjects/` holds the 2 built-in **demo** rooms, copied into the dashboard's library on first
+start and given to Salle 1 and Salle 2: **Exemple de salle** (2 steps, an attachment, an image)
+and **Hexadécimal et décimal** (3 steps). They are examples, not real challenges: their answers
+are public on purpose, in plain `flags.yaml`. Your own rooms are created in the dashboard or
+loaded from a git repository or a zip.
 
 ## Tools
 

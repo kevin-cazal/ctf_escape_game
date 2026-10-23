@@ -20,15 +20,13 @@ env = dict(l.strip().split("=", 1) for l in open(".env") if "=" in l)
 
 
 def flags_of(subject):
-    """The right answers, decrypted from the subject (never written in this file: the repo is public)."""
-    import subprocess, yaml
-    out = subprocess.run(["gpg", "--batch", "--quiet", "--pinentry-mode", "loopback", "--passphrase",
-                          env["GPG_PASSPHRASE"], "-d", f"subjects/{subject}/flags.yaml.gpg"],
-                         capture_output=True, check=True).stdout
-    return {k: (v["value"] if isinstance(v, dict) else v) for k, v in yaml.safe_load(out)["flags"].items()}
+    """The right answers of a built-in demo room (public on purpose, in its flags.yaml)."""
+    import yaml
+    flags = yaml.safe_load(open(f"subjects/{subject}/flags.yaml"))["flags"]
+    return {k: (v["value"] if isinstance(v, dict) else v) for k, v in flags.items()}
 
 
-FLAG = {**flags_of("hex_dec"), **flags_of("agent_064")}
+FLAG = {**flags_of("hex_dec"), **flags_of("exemple_salle")}
 # The deployment of the infrastructure guide (tools/record_guide_infra.py): one machine, localhost.
 D = os.environ.get("DEMO_DASHBOARD", "http://localhost:9180")
 R = {n: env.get(f"ROOM{n}_URL", f"http://localhost:918{n}") for n in (1, 2, 3, 4)}
@@ -185,12 +183,25 @@ with sync_playwright() as p:
     time.sleep(2.5)
     st.mouse.wheel(0, 700); time.sleep(2); st.mouse.wheel(0, 900); time.sleep(2)
     st.goto(D + "/prepare")
-    caption(st, "1 · Préparer : les salles 1 et 2 ont un contenu par défaut ; la salle 3 reçoit Faux texte")
-    for n in (1, 2):
-        flash(st, st.locator(f"select[form=f-room{n}]")); time.sleep(0.8)
-    sel = st.locator("select[form=f-room3]"); flash(st, sel); sel.select_option("faux_texte"); time.sleep(0.8)
+    caption(st, "1 · Préparer : les salles 1 et 2 ont un contenu par défaut, les salles 3 et 4 rien encore")
+    for n in (1, 2, 3, 4):
+        flash(st, st.locator(f"select[form=f-room{n}]")); time.sleep(0.6)
+    caption(st, "2 · Créer un contenu dans l'éditeur, pour la salle 3")
+    st.locator("#contents").scroll_into_view_if_needed(); time.sleep(1)
+    click(st, st.locator("a", has_text="Create a room content"), 1.5)
+    typ(st.locator("input[name=name]"), "Le mot retourné", 60)
+    card = st.locator(".step-card").first
+    typ(card.locator("input[name^=title]"), "À l'envers", 60)
+    typ(card.locator("textarea"), "Lis ce mot à l'envers : **ruojnob**\n\nformat: ctf{mot}", 35)
+    typ(card.locator("input[name^=flag]"), "ctf{bonjour}", 60)
+    time.sleep(1.5)
+    with st.expect_navigation():
+        click(st, st.locator("button.primary", has_text="Save"), 0)
+    time.sleep(1.5)
+    st.goto(D + "/prepare"); caption(st, "1 · Préparer : la salle 3 reçoit le contenu créé")
+    sel = st.locator("select[form=f-room3]"); flash(st, sel); sel.select_option("le_mot_retourne"); time.sleep(0.8)
     click(st, st.locator("#f-room3 button[value=save]"), 1.5)
-    caption(st, "2 · Charger un contenu depuis un zip : l'exemple fourni (2 étapes, un fichier, une image)")
+    caption(st, "2 · Charger un contenu depuis un zip, pour la salle 4 (ici le zip d'exemple fourni)")
     st.locator("#contents").scroll_into_view_if_needed(); time.sleep(1)
     with st.expect_download() as dl:
         click(st, st.locator("a", has_text="Download an example zip"), 1)
@@ -247,11 +258,13 @@ with sync_playwright() as p:
     caption(st, "Pendant le jeu · chaque cellule : chrono, étapes, erreurs")
     caption(p1, "Équipe 01 · étape 1 : un mot en hexadécimal")
     answer(p1, "Hexadécimal", FLAG["hex"], 1)
-    caption(p2, "Équipe 02 · décoder le message en base64 (une erreur d'abord)")
-    answer(p2, "Agent 064", "ctf{Project}", 1.5)
+    caption(p2, "Équipe 02 · étape 1 : le mot caché dans le fichier joint (une erreur d'abord)")
+    answer(p2, "Le fichier joint", "ctf{indice}", 1.5)
     caption(p1, "Équipe 01 · étape 2 : un mot en décimal")
     answer(p1, "Décimal", FLAG["dec"], 1)
-    answer(p2, "Agent 064", FLAG["agent_064"], 3)
+    answer(p2, "Le fichier joint", FLAG["etape1"], 1)
+    caption(p2, "Équipe 02 · étape 2 : le même mot, à l'envers")
+    answer(p2, "Le mot à l'envers", FLAG["etape2"], 3)
     caption(p2, "Équipe 02 · salle 1 réussie")
     caption(st, "Pendant le jeu · l'équipe 02 a réussi la salle 1 : son temps est figé")
     mark("team 2 done room 1"); time.sleep(2)
@@ -274,9 +287,10 @@ with sync_playwright() as p:
     opened(p1, "Équipe 01 · la salle 1 s'ouvre")
     caption(p2, "Équipe 02 · étape 2 : décimal")
     answer(p2, "Décimal", FLAG["dec"], 1)
-    caption(p1, "Équipe 01 · décoder le message en base64")
-    answer(p1, "Agent 064", FLAG["agent_064"], 2)
-    caption(p1, "Équipe 01 · deux salles sur deux")
+    caption(p1, "Équipe 01 · le fichier joint, puis le mot à l'envers")
+    answer(p1, "Le fichier joint", FLAG["etape1"], 1)
+    answer(p1, "Le mot à l'envers", FLAG["etape2"], 2)
+    caption(p1, "Équipe 01 · deux salles réussies")
     caption(p2, "Équipe 02 · cherche encore l'étape 3…")
     caption(st, "Pendant le jeu · l'équipe 01 a fini, l'équipe 02 en est à 2/3 en salle 2")
     mark("team 1 done room 1"); time.sleep(4)

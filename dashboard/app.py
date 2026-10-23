@@ -38,7 +38,7 @@ library.seed_builtins()
 # ROOM1_URL, ROOM2_URL... registered with ROOMS_ADMIN_TOKEN and given a built-in content each.
 # After that the state is the staff's: nothing here runs again.
 DEFAULT_TEAMS = 2
-DEFAULT_CONTENTS = ["agent_064", "hex_dec"]  # faux_texte stays in the library as a spare
+DEFAULT_CONTENTS = ["exemple_salle", "hex_dec"]  # the two demo rooms of subjects/
 
 
 def first_start():
@@ -378,13 +378,13 @@ def example_zip():
     """A minimal room content in the right format, with a README: something to start from."""
     import io
     import zipfile
-    root = os.path.join(app.root_path, "example")
+    root = os.path.join(library.BUILTIN, "exemple_salle")
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         for folder, _, files in os.walk(root):
             for name in sorted(files):
                 path = os.path.join(folder, name)
-                z.write(path, os.path.relpath(path, root))
+                z.write(path, os.path.join("exemple_salle", os.path.relpath(path, root)))
     buf.seek(0)
     return send_file(buf, mimetype="application/zip", as_attachment=True,
                      download_name="exemple_salle.zip")

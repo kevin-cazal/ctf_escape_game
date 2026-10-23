@@ -296,6 +296,19 @@ A fresh `docker compose up` gives **2 rooms, 2 teams and 3 built-in room content
   removed): first start registered Salle 1 (Agent 064) and Salle 2 (Hexadécimal et décimal) and
   created 2 teams; push and health check all green.
 
+## Built-in rooms are demo rooms (23/10)
+
+The user does not want the built-in rooms to be real challenges, and does not mind their answers
+leaking: the client must not need the user's passphrase. So:
+
+- `subjects/` holds only the two demo rooms made for the videos: **Exemple de salle**
+  (`subjects/exemple_salle`, also served as the example zip) and **Hexadécimal et décimal**,
+  with plain `flags.yaml` and `checkpoint_codes.yaml`. Agent 064 and Faux texte (real OSINT
+  challenges) left the repo.
+- Defaults: Salle 1 = Exemple de salle, Salle 2 = Hexadécimal et décimal.
+- `GPG_PASSPHRASE` is now the client's own choice: it encrypts the answers the dashboard keeps,
+  and opens encrypted answers of subjects they load.
+
 ## Reuse of the workshop platform
 
 Source of truth: `Manta-Epitech-Academy/ctfd-workshop-platform` main (7ec7c25 on 20/10).
