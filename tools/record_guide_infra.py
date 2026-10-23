@@ -145,7 +145,7 @@ with sync_playwright() as p:
     time.sleep(2)
     w.locator("input[name=password]").click(); w.locator("input[name=password]").press_sequentially("demo-escape-game", delay=60)
     w.locator("button.primary").click(); w.wait_for_load_state("networkidle")
-    w.goto("http://localhost:9180/prepare"); caption(w, "Les 4 salles sont déjà enregistrées, avec leur jeton")
+    w.goto("http://localhost:9180/prepare"); caption(w, "Les 4 salles sont déjà enregistrées, avec leur jeton et le login admin de chaque CTFd")
     time.sleep(6)
     mark("dashboard")
 
