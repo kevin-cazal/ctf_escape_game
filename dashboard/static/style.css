@@ -133,3 +133,7 @@ i.c-wait { box-shadow: none; }
 .add-files { font-size: 13px; padding: 4px 10px; }
 /* `display: flex` above would otherwise beat the `hidden` attribute and show "0 teams waiting". */
 .waiting[hidden] { display: none; }
+/* CTFd admin login of each room (Prepare) */
+td.admin { font-size: 13px; white-space: nowrap; }
+td.admin .cred { display: block; }
+td.admin .secret { font-family: ui-monospace, monospace; background: var(--out-bg); padding: 1px 6px; border-radius: 6px; }

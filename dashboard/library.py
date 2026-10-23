@@ -103,7 +103,12 @@ def exists(cid):
 
 def load(cid):
     model = json.loads((ROOT / cid / "model.json").read_text())
-    model["ready"] = not problems(model, load_secrets(cid))
+    try:
+        model["ready"] = not problems(model, load_secrets(cid))
+    except ContentError:
+        # GPG_PASSPHRASE changed since this content was saved: its answers no longer open.
+        model["ready"] = False
+        model["locked"] = True
     return model
 
 

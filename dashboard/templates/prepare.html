@@ -10,12 +10,21 @@ Each room's content is imported by the workshop platform's own importer.</p>
   <h2><span class="step">1</span> Rooms</h2>
   {% if state.rooms %}
   <table class="rooms">
-    <thead><tr><th>Room</th><th>Instance</th><th>Content</th><th>Pushed</th><th></th></tr></thead>
+    <thead><tr><th>Room</th><th>Instance</th><th>CTFd admin</th><th>Content</th><th>Pushed</th><th></th></tr></thead>
     <tbody>
     {% for r in state.rooms %}
       <tr>
         <td><input name="name" value="{{ r.name }}" class="short" form="f-{{ r.id }}"></td>
         <td><a href="{{ r.url }}" target="_blank" rel="noopener">{{ r.url.split('//')[1] }}</a></td>
+        <td class="admin">
+          {% if r.admin_password %}
+          <span class="cred"><b>{{ r.admin_login or 'admin' }}</b>
+            <span class="secret" data-secret="{{ r.admin_password }}">••••••••</span>
+            <button type="button" class="link small" data-reveal>show</button>
+            <button type="button" class="link small" data-copy="{{ r.admin_password }}">copy</button></span>
+          <a href="{{ r.url }}/login?staff=1" target="_blank" rel="noopener" class="small">open the admin login</a>
+          {% else %}<span class="muted small">unknown</span>{% endif %}
+        </td>
         <td>
           <select name="subject" form="f-{{ r.id }}">
             <option value="">— choose —</option>
@@ -49,6 +58,8 @@ Each room's content is imported by the workshop platform's own importer.</p>
     <label>Instance URL <input name="url" type="url" placeholder="https://room1.example.org" required></label>
     <label>Admin token <input name="token" type="password" required autocomplete="off"></label>
     <label>Room name <input name="name" placeholder="Salle {{ state.rooms|length + 1 }}" class="short"></label>
+    <label>CTFd admin login <input name="admin_login" placeholder="admin" class="short"></label>
+    <label>CTFd admin password <input name="admin_password" type="password" autocomplete="off" class="short"></label>
     <label title="Only if the dashboard cannot reach the room at its public URL, e.g. a test on one machine with localhost URLs">Internal URL (optional)
       <input name="api_url" placeholder="http://room{{ state.rooms|length + 1 }}:8000" class="short"></label>
     <button class="primary">Add</button>
@@ -65,7 +76,7 @@ Each room's content is imported by the workshop platform's own importer.</p>
     {% for c in catalog %}
       <tr>
         <td><a href="{{ url_for('edit_content', cid=c.id) }}"><b>{{ c.name }}</b></a>
-            {% if not c.ready %}<span class="badge ko">not ready</span>{% endif %}</td>
+            {% if c.locked %}<span class="badge ko">answers locked: GPG_PASSPHRASE changed</span>{% elif not c.ready %}<span class="badge ko">not ready</span>{% endif %}</td>
         <td>{{ c.steps|length }}</td>
         <td class="muted small">{% if c.source.kind in ('git', 'github') %}{{ c.source.repo }}@{{ c.source.ref }} ({{ c.source.sha }}){% elif c.source.kind == 'zip' %}{{ c.source.file }}{% else %}{{ c.source.kind }}{% endif %}</td>
         <td>{{ used.get(c.id, [])|join(', ') or '–' }}</td>
@@ -143,4 +154,20 @@ Each room's content is imported by the workshop platform's own importer.</p>
     <button class="danger">Reset results</button>
   </form>
 </section>
+{% endblock %}
+{% block scripts %}
+<script>
+// CTFd admin passwords: hidden until asked, copyable.
+document.querySelectorAll("[data-reveal]").forEach(b => b.addEventListener("click", () => {
+  const s = b.parentElement.querySelector(".secret");
+  const shown = s.textContent === s.dataset.secret;
+  s.textContent = shown ? "••••••••" : s.dataset.secret;
+  b.textContent = shown ? "show" : "hide";
+}));
+document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "copied"; }
+  catch (e) { b.textContent = "select it"; }
+  setTimeout(() => b.textContent = "copy", 1500);
+}));
+</script>
 {% endblock %}

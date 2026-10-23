@@ -55,7 +55,8 @@ def first_start():
         state["rooms"].append({
             "id": f"room{n}", "name": f"Salle {n}", "url": os.environ[f"ROOM{n}_URL"].rstrip("/"),
             "api_url": f"http://room{n}:8000",  # the compose service: no detour through the proxy
-            "token": token, "subject": content if library.exists(content) else None,
+            "token": token,
+            "admin_login": "admin", "admin_password": os.environ.get("ROOMS_ADMIN_PASSWORD", ""), "subject": content if library.exists(content) else None,
             "door_id": None, "challenge_ids": [], "users": {}})
         n += 1
     store.save(state)
@@ -130,6 +131,12 @@ def prepare():
     for r in state["rooms"]:
         if r.get("subject"):
             used.setdefault(r["subject"], []).append(r["name"])
+    for r in state["rooms"]:
+        # Rooms of this compose (reached at http://roomN:8000) share ROOMS_ADMIN_PASSWORD; a room
+        # registered before the password was kept gets it here.
+        if not r.get("admin_password") and r.get("api_url"):
+            r["admin_login"] = r.get("admin_login") or "admin"
+            r["admin_password"] = os.environ.get("ROOMS_ADMIN_PASSWORD", "")
     return render_template("prepare.html", state=state, catalog=library.all_contents(),
                            used=used, health=session.pop("health", None))
 
@@ -150,6 +157,8 @@ def add_room():
     internal = request.form.get("api_url", "").strip().rstrip("/")
     if internal:
         room["api_url"] = internal
+    room["admin_login"] = request.form.get("admin_login", "").strip() or "admin"
+    room["admin_password"] = request.form.get("admin_password", "")
     try:
         rooms.api(room).check_admin()
     except CTFdError as e:
@@ -274,7 +283,12 @@ def new_content():
 @staff_only
 def edit_content(cid):
     library.exists(cid) or abort(404)
-    model, secrets_ = library.load(cid), library.load_secrets(cid)
+    try:
+        model, secrets_ = library.load(cid), library.load_secrets(cid)
+    except library.ContentError:
+        flash("This content's answers do not open with the current GPG_PASSPHRASE "
+              "(it was changed after the content was saved).", "error")
+        return redirect(url_for("prepare") + "#contents")
     return render_template("content.html", model=model, secrets=secrets_,
                            used=_used_by(store.load(), cid), issues=library.problems(model, secrets_))
 

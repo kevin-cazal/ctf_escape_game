@@ -66,6 +66,8 @@ services:
       ROOM5_URL: ${ROOM5_URL:-}
       ROOM6_URL: ${ROOM6_URL:-}
       ROOMS_ADMIN_TOKEN: ${ROOMS_ADMIN_TOKEN}
+      # Shown to staff on the Prepare page: the login of each room's CTFd admin.
+      ROOMS_ADMIN_PASSWORD: ${ROOMS_ADMIN_PASSWORD}
     volumes: [dashboard-data:/data]
 
   room1:
