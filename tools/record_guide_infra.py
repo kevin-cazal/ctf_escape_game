@@ -13,6 +13,7 @@ CH = "/home/kc/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome"
 W, H = 960, 1080
 OUT = "demo/raw_guide"
 T0 = time.time()
+WORK = os.environ.get("GUIDE_WORK", "/tmp/egguide/work")  # where the shell of tools/guide/bashrc starts
 def mark(w): print((round(time.time() - T0, 1), w), flush=True)
 
 CAPTION_JS = open("tools/guide/caption.js").read()
@@ -120,8 +121,17 @@ with sync_playwright() as p:
             caption(t, "3 · Le jeton admin : le même pour toutes les salles, préréglé dans chaque CTFd")
         if line.startswith("ROOM1_URL"):
             caption(t, "3 · L'adresse de chaque salle (ici localhost : le domaine et le proxy dépendent de votre infra)")
-        type_cmd(t, line, 18); time.sleep(0.5)
+        type_cmd(t, line, 30)
+        # wait for bash to echo the line and give the next "> " before typing on
+        end = time.time() + 15
+        while time.time() < end and not (t.evaluate(LAST).startswith("> ") or line == "EOF"):
+            time.sleep(0.2)
+        time.sleep(0.3)
     wait_prompt(t); time.sleep(1)
+    # a dropped keystroke would leave a value empty: stop the take rather than film a broken .env
+    bad = [l for l in open(os.path.join(WORK, "ctf_escape_game", ".env")).read().splitlines() if l.endswith("=")]
+    if bad:
+        raise SystemExit(f"broken .env, empty: {bad}")
     caption(t, "3 · Le jeton admin de chaque salle, à garder pour le tableau de bord")
     run(t, "grep ROOMS_ADMIN_TOKEN .env", 4)
     caption(t, "3 · Vérifier : le compose compte maintenant 4 salles")
@@ -135,7 +145,7 @@ with sync_playwright() as p:
     run(t, "for p in 9181 9182 9183 9184; do until curl -sf -o /dev/null localhost:$p/login; do sleep 2; done; echo \"salle $p : OK\"; done", 1, 600, 15)
     run(t, "docker compose ps --format 'table {{.Service}}\\t{{.Status}}\\t{{.Ports}}'", 4, 60, 15)
     caption(t, "4 · Chaque salle accepte le jeton : il en est l'administrateur")
-    run(t, "T=$(grep ROOMS_ADMIN_TOKEN .env | cut -d= -f2)", 0.5, 30, 20)
+    run(t, "T=$(grep ROOMS_ADMIN_TOKEN .env | cut -d= -f2)", 0.5, 120, 20)
     run(t, "for p in 9181 9182 9183 9184; do echo -n \"$p : \"; curl -s -H \"Authorization: Token $T\" -H 'Content-Type: application/json' localhost:$p/api/v1/users/me | grep -o '\"name\": \"admin\"'; done", 4, 60, 12)
     mark("started")
 
